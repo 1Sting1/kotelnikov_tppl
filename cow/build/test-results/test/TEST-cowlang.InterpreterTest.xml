@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cowlang.InterpreterTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2025-11-22T10:28:37.874Z" hostname="MacBook-Air-Maksim.local" time="0.048">
+  <properties/>
+  <testcase name="вложенные циклы()" classname="cowlang.InterpreterTest" time="0.038"/>
+  <testcase name="moO and mOo()" classname="cowlang.InterpreterTest" time="0.001"/>
+  <testcase name="MMM()" classname="cowlang.InterpreterTest" time="0.001"/>
+  <testcase name="Moo()" classname="cowlang.InterpreterTest" time="0.003"/>
+  <testcase name="OOM()" classname="cowlang.InterpreterTest" time="0.001"/>
+  <testcase name="OOO()" classname="cowlang.InterpreterTest" time="0.001"/>
+  <testcase name="пропуск цикла когда ячейка = 0()" classname="cowlang.InterpreterTest" time="0.0"/>
+  <testcase name="MoO and MOo()" classname="cowlang.InterpreterTest" time="0.0"/>
+  <testcase name="MOO-moo()" classname="cowlang.InterpreterTest" time="0.001"/>
+  <system-out><![CDATA[C65]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

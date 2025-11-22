@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Main.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cow</a> &gt; <a href="index.source.html" class="el_package">cowlang</a> &gt; <span class="el_source">Main.kt</span></div><h1>Main.kt</h1><pre class="source lang-java linenums">package cowlang
+
+import java.io.File
+import java.nio.charset.StandardCharsets
+
+<span class="fc" id="L6">class Main {</span>
+<span class="fc bfc" id="L7" title="All 2 branches covered.">    val memory = IntArray(10000) { 0 }</span>
+<span class="pc" id="L8">    var memoryPointer = 0</span>
+<span class="nc" id="L9">    var instructionPointer = 0</span>
+<span class="pc" id="L10">    var register: Int? = null</span>
+
+<span class="nc" id="L12">    var inputProvider: (() -&gt; Char)? = null</span>
+
+<span class="fc" id="L14">    private val outputBuffer = StringBuilder()</span>
+
+    fun reset() {
+<span class="nc" id="L17">        memory.fill(0)</span>
+<span class="nc" id="L18">        memoryPointer = 0</span>
+<span class="nc" id="L19">        instructionPointer = 0</span>
+<span class="nc" id="L20">        register = null</span>
+<span class="nc" id="L21">        outputBuffer.clear()</span>
+<span class="nc" id="L22">    }</span>
+
+<span class="fc" id="L24">    fun getOutput(): String = outputBuffer.toString()</span>
+
+    fun run(code: String) {
+<span class="fc" id="L27">        val instructions = &quot;MoO|MOo|moO|mOo|moo|MOO|OOM|oom|mOO|Moo|OOO|MMM&quot;.toRegex()</span>
+<span class="fc" id="L28">            .findAll(code)</span>
+<span class="fc" id="L29">            .map { it.value }</span>
+<span class="fc" id="L30">            .toList()</span>
+
+<span class="fc" id="L32">        instructionPointer = 0</span>
+
+<span class="fc bfc" id="L34" title="All 2 branches covered.">        while (instructionPointer &lt; instructions.size) {</span>
+<span class="fc" id="L35">            val command = instructions[instructionPointer]</span>
+<span class="fc" id="L36">            executeCommand(command, instructions)</span>
+<span class="fc" id="L37">            instructionPointer++</span>
+        }
+<span class="fc" id="L39">    }</span>
+
+    private fun executeCommand(command: String, contextInstructions: List&lt;String&gt;) {
+<span class="pc bpc" id="L42" title="2 of 13 branches missed.">        when (command) {</span>
+            &quot;MoO&quot; -&gt; {
+<span class="fc" id="L44">                memory[memoryPointer] = (memory[memoryPointer] + 1) and 0xFF</span>
+            }
+            &quot;MOo&quot; -&gt; {
+<span class="fc" id="L47">                memory[memoryPointer] = (memory[memoryPointer] - 1) and 0xFF</span>
+            }
+            &quot;moO&quot; -&gt; {
+<span class="fc" id="L50">                memoryPointer = (memoryPointer + 1) % memory.size</span>
+            }
+            &quot;mOo&quot; -&gt; {
+<span class="fc" id="L53">                memoryPointer--</span>
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">                if (memoryPointer &lt; 0) memoryPointer = memory.size - 1</span>
+            }
+
+            &quot;MOO&quot; -&gt; {
+<span class="fc bfc" id="L58" title="All 2 branches covered.">                if (memory[memoryPointer] == 0) {</span>
+<span class="fc" id="L59">                    var depth = 1</span>
+<span class="pc bpc" id="L60" title="1 of 4 branches missed.">                    while (depth &gt; 0 &amp;&amp; instructionPointer &lt; contextInstructions.size - 1) {</span>
+<span class="fc" id="L61">                        instructionPointer++</span>
+<span class="fc" id="L62">                        when (contextInstructions[instructionPointer]) {</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">                            &quot;MOO&quot; -&gt; depth++</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">                            &quot;moo&quot; -&gt; depth--</span>
+                        }
+                    }
+                }
+            }
+
+            &quot;moo&quot; -&gt; {
+<span class="fc bfc" id="L71" title="All 2 branches covered.">                if (memory[memoryPointer] != 0) {</span>
+<span class="fc" id="L72">                    var depth = 1</span>
+<span class="pc bpc" id="L73" title="1 of 4 branches missed.">                    while (depth &gt; 0 &amp;&amp; instructionPointer &gt; 0) {</span>
+<span class="fc" id="L74">                        instructionPointer--</span>
+<span class="fc" id="L75">                        when (contextInstructions[instructionPointer]) {</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">                            &quot;moo&quot; -&gt; depth++</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">                            &quot;MOO&quot; -&gt; depth--</span>
+                        }
+                    }
+                }
+            }
+
+            &quot;OOM&quot; -&gt; {
+<span class="fc" id="L84">                val value = memory[memoryPointer]</span>
+<span class="fc" id="L85">                outputBuffer.append(value)</span>
+<span class="fc" id="L86">                print(value)</span>
+            }
+            &quot;oom&quot; -&gt; {
+<span class="nc bnc" id="L89" title="All 2 branches missed.">                if (inputProvider != null) {</span>
+<span class="nc" id="L90">                    try {</span>
+<span class="nc" id="L91">                        val charCode = inputProvider!!.invoke().code</span>
+<span class="nc" id="L92">                        memory[memoryPointer] = charCode and 0xFF</span>
+<span class="nc" id="L93">                    } catch (e: Exception) {</span>
+<span class="nc" id="L94">                        memory[memoryPointer] = 0</span>
+                    }
+                }
+            }
+            &quot;Moo&quot; -&gt; {
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">                if (memory[memoryPointer] == 0) {</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">                    if (inputProvider != null) {</span>
+<span class="nc" id="L101">                        try {</span>
+<span class="nc" id="L102">                            val charCode = inputProvider!!.invoke().code</span>
+<span class="nc" id="L103">                            memory[memoryPointer] = charCode and 0xFF</span>
+<span class="nc" id="L104">                        } catch (e: Exception) {</span>
+<span class="nc" id="L105">                            memory[memoryPointer] = 0</span>
+                        }
+                    }
+                } else {
+<span class="fc" id="L109">                    val char = memory[memoryPointer].toChar()</span>
+<span class="fc" id="L110">                    outputBuffer.append(char)</span>
+<span class="fc" id="L111">                    print(char)</span>
+                }
+            }
+            &quot;OOO&quot; -&gt; {
+<span class="fc" id="L115">                memory[memoryPointer] = 0</span>
+            }
+            &quot;MMM&quot; -&gt; {
+<span class="fc bfc" id="L118" title="All 2 branches covered.">                if (register == null) {</span>
+<span class="fc" id="L119">                    register = memory[memoryPointer]</span>
+                } else {
+<span class="fc" id="L121">                    memory[memoryPointer] = register!!</span>
+<span class="fc" id="L122">                    register = null</span>
+                }
+            }
+            &quot;mOO&quot; -&gt; {
+<span class="nc" id="L126">                val commandCode = memory[memoryPointer]</span>
+<span class="nc" id="L127">                val commandToExecute = getCommandByCode(commandCode)</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">                if (commandToExecute != null) {</span>
+
+<span class="nc bnc" id="L130" title="All 4 branches missed.">                    if (commandToExecute != &quot;moo&quot; &amp;&amp; commandToExecute != &quot;MOO&quot;) {</span>
+<span class="nc" id="L131">                        executeCommand(commandToExecute, contextInstructions)</span>
+                    }
+                }
+            }
+        }
+<span class="fc" id="L136">    }</span>
+
+    private fun getCommandByCode(code: Int): String? {
+<span class="nc bnc" id="L139" title="All 13 branches missed.">        return when(code) {</span>
+<span class="nc" id="L140">            0 -&gt; &quot;MoO&quot;</span>
+<span class="nc" id="L141">            1 -&gt; &quot;MOo&quot;</span>
+<span class="nc" id="L142">            2 -&gt; &quot;moO&quot;</span>
+<span class="nc" id="L143">            3 -&gt; &quot;mOo&quot;</span>
+<span class="nc" id="L144">            4 -&gt; &quot;moo&quot;</span>
+<span class="nc" id="L145">            5 -&gt; &quot;MOO&quot;</span>
+<span class="nc" id="L146">            6 -&gt; &quot;OOM&quot;</span>
+<span class="nc" id="L147">            7 -&gt; &quot;oom&quot;</span>
+<span class="nc" id="L148">            8 -&gt; &quot;MMM&quot;</span>
+<span class="nc" id="L149">            9 -&gt; &quot;OOO&quot;</span>
+<span class="nc" id="L150">            10 -&gt; &quot;mOO&quot;</span>
+<span class="nc" id="L151">            11 -&gt; &quot;Moo&quot;</span>
+<span class="nc" id="L152">            else -&gt; null</span>
+        }
+    }
+}
+
+fun main(args: Array&lt;String&gt;) {
+<span class="nc" id="L158">    System.setOut(java.io.PrintStream(System.out, true, StandardCharsets.UTF_8))</span>
+<span class="nc bnc" id="L159" title="All 4 branches missed.">    val filenames = if (args.isEmpty()) {</span>
+<span class="nc" id="L160">        listOf(&quot;cow_examples/hello.cow&quot;, &quot;cow_examples/fib.cow&quot;)</span>
+    } else {
+<span class="nc" id="L162">        args.toList()</span>
+    }
+
+<span class="nc" id="L165">    val interpreter = Main()</span>
+
+<span class="nc bnc" id="L167" title="All 2 branches missed.">    for (filename in filenames) {</span>
+<span class="nc" id="L168">        println(&quot;\n $filename &quot;)</span>
+<span class="nc" id="L169">        interpreter.reset()</span>
+<span class="nc" id="L170">        try {</span>
+<span class="nc" id="L171">            val file = File(filename)</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">            if (file.exists()) {</span>
+<span class="nc" id="L173">                val code = file.readText(StandardCharsets.UTF_8)</span>
+<span class="nc" id="L174">                interpreter.run(code)</span>
+            } else {
+<span class="nc" id="L176">                println(&quot;Файл не найден: ${file.absolutePath}&quot;)</span>
+            }
+<span class="nc" id="L178">        } catch (e: Exception) {</span>
+<span class="nc" id="L179">            println(&quot;ОШИБКА: ${e.message}&quot;)</span>
+<span class="nc" id="L180">            e.printStackTrace()</span>
+        }
+    }
+<span class="nc" id="L183">}</span>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
