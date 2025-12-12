@@ -19,10 +19,6 @@ class InterpreterTest {
         return interpreter.interpret()
     }
 
-    // ==========================================
-    // 1. HAPPY PATH (Основная логика)
-    // ==========================================
-
     @Test
     fun testEmptyProgram() {
         val result = runInterpreter("BEGIN ;; END.")
@@ -55,48 +51,35 @@ class InterpreterTest {
         assertEquals(8, result["z"])
     }
 
-    // ==========================================
-    // 2. LEXER COVERAGE (Branch Busters)
-    // ==========================================
-
     @Test
     fun testLexerBranchCoverage() {
-        // 1. Покрытие циклов WHILE (выход по EOF и выход по символу)
-        // Число -> EOF
         val l1 = Lexer("123")
         assertEquals(TokenType.INTEGER, l1.getNextToken().type)
         assertEquals(TokenType.EOF, l1.getNextToken().type)
 
-        // Число -> Пробел (выход из цикла while(isDigit))
         val l2 = Lexer("123 ")
         assertEquals(TokenType.INTEGER, l2.getNextToken().type)
 
-        // ID -> EOF
         val l3 = Lexer("abc")
         assertEquals(TokenType.ID, l3.getNextToken().type)
         assertEquals(TokenType.EOF, l3.getNextToken().type)
 
-        // ID -> Пробел (выход из цикла while(isLetterOrDigit))
         val l4 = Lexer("abc ")
         assertEquals(TokenType.ID, l4.getNextToken().type)
 
-        // 2. Покрытие IF (isLetter || '_')
-        val l5 = Lexer("x") // Letter
+        val l5 = Lexer("x")
         assertEquals(TokenType.ID, l5.getNextToken().type)
 
-        val l6 = Lexer("_") // Underscore
+        val l6 = Lexer("_")
         assertEquals(TokenType.ID, l6.getNextToken().type)
 
-        // 3. Покрытие IF (':' && peek == '=')
-        val l8 = Lexer(":=") // True && True
+        val l8 = Lexer(":=")
         assertEquals(TokenType.ASSIGN, l8.getNextToken().type)
 
-        // True && False (EOF)
         val l10 = Lexer(":")
         val ex = assertThrows<IllegalArgumentException> { l10.getNextToken() }
         assertTrue(ex.message!!.contains("Unexpected") || ex.message!!.contains("did you mean"))
 
-        // 4. Покрытие всех символов (для WHEN)
         val symbols = listOf('+', '-', '*', '/', '(', ')', '.', ';')
         for (char in symbols) {
             val lex = Lexer(char.toString())
@@ -116,10 +99,6 @@ class InterpreterTest {
         assertEquals("abc", lexer.getNextToken().value)
         assertThrows<IllegalArgumentException> { lexer.getNextToken() }
     }
-
-    // ==========================================
-    // 3. ОШИБКИ
-    // ==========================================
 
     @Test
     fun testCaseInsensitive() {
@@ -147,10 +126,6 @@ class InterpreterTest {
         assertThrows<ArithmeticException> { runInterpreter("BEGIN x := 1/0; END.") }
     }
 
-    // ==========================================
-    // 4. MOCK PARSER
-    // ==========================================
-
     @Test
     fun testInterpreterUnreachableBranches() {
         val badBin = BinOp(Num(Token(TokenType.INTEGER,"1")), Token(TokenType.EOF), Num(Token(TokenType.INTEGER,"1")))
@@ -161,10 +136,6 @@ class InterpreterTest {
         val mockParserUnary = object : Parser(Lexer("")) { override fun parse() = badUnary }
         assertThrows<IllegalArgumentException> { Interpreter(mockParserUnary).interpret() }
     }
-
-    // ==========================================
-    // 5. GENERATED METHODS
-    // ==========================================
 
     @Test
     fun testGeneratedCodeCoverage() {
