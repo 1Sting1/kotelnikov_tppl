@@ -1,0 +1,231 @@
+default rel
+
+global _main
+
+section .data
+    filename db "data.txt", 0
+    x_stat dd 5, 3, 2, 6, 1, 7, 4
+    y_stat dd 0, 10, 1, 9, 2, 8, 5
+    newline db 10
+    space db " "
+
+section .bss
+    buffer resb 1024
+    x_file resd 7
+    y_file resd 7
+    num_str resb 20
+
+section .text
+
+calc_and_print:
+    push rbx
+    push rcx
+    push rdx
+    xor rcx, rcx
+    xor r10, r10
+
+.loop:
+    cmp rcx, 7
+    je .done
+    mov eax, [rdi + rcx*4]
+    mov edx, [rsi + rcx*4]
+    sub eax, edx
+    movsxd rax, eax
+    add r10, rax
+    inc rcx
+    jmp .loop
+
+.done:
+    mov rax, r10
+    mov rbx, 7
+    cqo
+    idiv rbx
+    call print_number
+    pop rdx
+    pop rcx
+    pop rbx
+    ret
+
+print_full_array:
+    push rbx
+    push rcx
+    push r12
+    mov r12, rdi
+    xor rcx, rcx
+
+.print_loop:
+    cmp rcx, 7
+    je .print_end
+    mov eax, [r12 + rcx*4]
+    movsxd rax, eax
+    call print_number
+    push rax
+    push rdi
+    push rdx
+    mov rax, 0x2000004
+    mov rdi, 1
+    lea rsi, [space]
+    mov rdx, 1
+    syscall
+    pop rdx
+    pop rdi
+    pop rax
+    inc rcx
+    jmp .print_loop
+
+.print_end:
+    pop r12
+    pop rcx
+    pop rbx
+    ret
+
+print_newline:
+    mov rax, 0x2000004
+    mov rdi, 1
+    lea rsi, [newline]
+    mov rdx, 1
+    syscall
+    ret
+
+print_number:
+    push rbx
+    push rcx
+    push rdx
+    push rdi
+    push rsi
+    push rbp
+    mov rcx, 0
+    mov rbx, 10
+    lea rsi, [num_str + 19]
+    mov byte [rsi], 0
+    cmp rax, 0
+    jge .pos
+    neg rax
+    mov rbp, 1
+    jmp .convert
+
+.pos:
+    mov rbp, 0
+
+.convert:
+    xor rdx, rdx
+    div rbx
+    add dl, '0'
+    dec rsi
+    mov [rsi], dl
+    inc rcx
+    test rax, rax
+    jnz .convert
+    cmp rbp, 1
+    jne .write
+    dec rsi
+    mov byte [rsi], '-'
+    inc rcx
+
+.write:
+    mov rax, 0x2000004
+    mov rdi, 1
+    mov rdx, rcx
+    syscall
+    pop rbp
+    pop rsi
+    pop rdi
+    pop rdx
+    pop rcx
+    pop rbx
+    ret
+
+_main:
+    lea rdi, [x_stat]
+    lea rsi, [y_stat]
+    call calc_and_print
+    call print_newline
+
+    mov rax, 0x2000005
+    lea rdi, [filename]
+    mov rsi, 0
+    mov rdx, 0
+    syscall
+    mov r8, rax
+
+    mov rax, 0x2000003
+    mov rdi, r8
+    lea rsi, [buffer]
+    mov rdx, 1024
+    syscall
+
+    mov rax, 0x2000006
+    mov rdi, r8
+    syscall
+
+    lea rsi, [buffer]
+    xor rcx, rcx
+
+parse_loop:
+    cmp rcx, 14
+    je parse_done
+
+skip_chars:
+    mov al, byte [rsi]
+    cmp al, 0
+    je parse_done
+    cmp al, '0'
+    jl next_char
+    cmp al, '9'
+    jg next_char
+    jmp read_num
+
+next_char:
+    inc rsi
+    jmp skip_chars
+
+read_num:
+    xor rbx, rbx
+
+conv_loop:
+    mov al, byte [rsi]
+    cmp al, '0'
+    jl save_num
+    cmp al, '9'
+    jg save_num
+    sub al, '0'
+    imul rbx, 10
+    movzx rdx, al
+    add rbx, rdx
+    inc rsi
+    jmp conv_loop
+
+save_num:
+    cmp rcx, 7
+    jl to_x
+    lea r11, [y_file]
+    mov r12, rcx
+    sub r12, 7
+    mov [r11 + r12*4], ebx
+    jmp num_ok
+
+to_x:
+    lea r11, [x_file]
+    mov [r11 + rcx*4], ebx
+
+num_ok:
+    inc rcx
+    jmp parse_loop
+
+parse_done:
+    lea rdi, [x_file]
+    call print_full_array
+    call print_newline
+
+    lea rdi, [y_file]
+    call print_full_array
+    call print_newline
+
+    lea rdi, [x_file]
+    lea rsi, [y_file]
+    call calc_and_print
+    call print_newline
+
+    mov rax, 0x2000001
+    mov rdi, 0
+    syscall
